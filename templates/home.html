@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sorting Algorithm Visualizer</title>
+    <style>
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        #controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+
+        #controls label {
+            margin-right: 10px;
+        }
+
+        #controls select, #controls button {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        #controls button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #controls button:hover {
+            background-color: #0056b3;
+        }
+
+        #visualizer-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 500px;
+            background-color: #e9ecef;
+            margin: 20px 0;
+            border-radius: 8px;
+            padding: 10px;
+            overflow-x: auto;
+        }
+
+        .bar {
+            width: 20px;
+            background-color: #007bff;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            margin: 0 2px;
+            border-radius: 4px;
+        }
+
+        .bar.red {
+            background-color: red;
+        }
+
+        .bar.green {
+            background-color: green;
+        }
+
+        .bar.yellow {
+            background-color: yellow;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Sorting Algorithm Visualizer</h1>
+    <div class="container">
+        
+        <div id="controls">
+            <div>
+                <label for="algorithm">Algorithm:</label>
+                <select id="algorithm">
+                    <option value="">Select</option>
+                    <option value="Bubble Sort">Bubble Sort</option>
+                    <option value="Selection Sort">Selection Sort</option>
+                    <option value="Insertion Sort">Insertion Sort</option>
+                    <option value="Merge Sort">Merge Sort</option>
+                    <option value="Quick Sort">Quick Sort</option>
+                    <option value="Heap Sort">Heap Sort</option>
+                    <option value="Counting Sort">Counting Sort</option>
+                </select>
+            </div>
+            <div>
+                <label for="speed">Speed:</label>
+                <select id="speed">
+                    <option value="">Select</option>
+                    <option value="0.3">Slow</option>
+                    <option value="0.1">Medium</option>
+                    <option value="0.01">Fast</option>
+                </select>
+            </div>
+            <button onclick="generateArray()">Generate Array</button>
+            <button onclick="sortArray()">Sort</button>
+        </div>
+
+        <div id="visualizer-container"></div>
+    </div>
+
+    <script>
+        let data = [];
+        let sortingSteps = [];
+        let currentStep = 0;
+
+        function generateArray() {
+            fetch('/generate/')
+                .then(response => response.json())
+                .then(result => {
+                    data = result.values;
+                    displayArray(data, []);
+                });
+        }
+
+        function sortArray() {
+            const algorithm = document.getElementById('algorithm').value;
+            const speed = document.getElementById('speed').value;
+
+            fetch(`/sort/?algorithm=${algorithm}&speed=${speed}&data[]=${data.join('&data[]=')}`)
+                .then(response => response.json())
+                .then(result => {
+                    sortingSteps = result.steps;
+                    currentStep = 0;
+                    animateSorting(speed);
+                });
+        }
+
+        function animateSorting(speed) {
+            if (currentStep < sortingSteps.length) {
+                const step = sortingSteps[currentStep];
+                displayArray(step.data, step.colors);
+                currentStep++;
+                setTimeout(() => animateSorting(speed), speed * 1000);
+            }
+        }
+
+        function displayArray(data, colors) {
+            const container = document.getElementById('visualizer-container');
+            container.innerHTML = '';
+            const maxValue = Math.max(...data);  // Find the maximum value for scaling
+            data.forEach((value, index) => {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = `${(value / maxValue) * 100}%`;  // Scale heights properly
+                bar.style.backgroundColor = colors[index] || '#007bff';
+                bar.innerText = value;  // Display the value on the bar
+                container.appendChild(bar);
+            });
+        }
+
+        window.onload = generateArray;
+    </script>
+</body>
+</html>
